@@ -1,0 +1,27 @@
+name: Sync Firebase auth helper
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download auth helper files
+        run: |
+          mkdir -p __/auth
+          for f in handler handler.js experiments.js iframe iframe.js; do
+            curl -fsSL "https://pathology-draw.firebaseapp.com/__/auth/$f" -o "__/auth/$f"
+          done
+          ls -la __/auth
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __/auth
+          git diff --cached --quiet || (git commit -m "Sync Firebase auth helper files" && git push)
